@@ -71,6 +71,9 @@ export class OpenSearchService implements IAuditService {
   // 2. Init sets the name once
   public async init(serviceName: string): Promise<void> {
     if (this.isInitialized) {
+      if (this.serviceName !== serviceName) {
+        throw new Error(`OpenSearchService already initialized with "${this.serviceName}".`);
+      }
       return;
     }
 
@@ -115,7 +118,7 @@ export class OpenSearchService implements IAuditService {
         refresh: 'wait_for',
       });
     } catch (error: unknown) {
-        throw new Error('Audit Log Failed: Transaction Aborted.', { cause: error });
+      throw new Error('Audit Log Failed: Transaction Aborted.', { cause: error });
     }
   }
 }

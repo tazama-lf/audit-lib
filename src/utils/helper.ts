@@ -14,6 +14,12 @@
  */
 export function validateEnvVar(name: string, type: 'string' | 'number' | 'boolean', optional = false): string | number | boolean {
   const value = process.env[name] ?? '';
+  if (value !== '' && !value.trim().length) {
+    if (optional) {
+      throw new Error(`Environment variable ${name} is optional but set to a string with whitespaces only. Consider removing it.`);
+    }
+    throw new Error(`Environment variable ${name} is not defined.`);
+  }
 
   if (value === '' && optional) {
     return '';
@@ -21,10 +27,6 @@ export function validateEnvVar(name: string, type: 'string' | 'number' | 'boolea
 
   if (value === '') {
     throw new Error(`Environment variable ${name} is not defined.`);
-  }
-
-  if (value && !value.trim().length && optional) {
-    throw new Error(`Environment variable ${name} is optional but set to a string with whitespaces only. Consider removing it.`);
   }
 
   switch (type) {

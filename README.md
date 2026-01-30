@@ -22,17 +22,6 @@ AUDIT_PROVIDER=opensearch
 # Add OpenSearch connection details
 OPENSEARCH_NODE=http://localhost:9200
 ...
-```
-
-**For PostgreSQL:**
-```env
-AUDIT_PROVIDER=postgres
-
-# Add PostgreSQL connection details
-DB_HOST=localhost
-DB_PORT=5432
-...
-```
 If `AUDIT_PROVIDER` is not set, it will default to `opensearch`.
 
 ### 3. Providing the Logger
