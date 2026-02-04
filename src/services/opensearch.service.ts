@@ -9,7 +9,7 @@ export class OpenSearchService implements IAuditService {
   private isInitialized = false;
 
   // 1. Store the service name here
-  private serviceName!: string;
+  private serviceName = 'unknown-service';
 
   private constructor() {
     const config = openSearchConfig();
