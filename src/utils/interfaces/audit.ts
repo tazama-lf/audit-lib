@@ -4,17 +4,16 @@ export interface IAuditService {
 }
 
 export interface AuditLogData {
-  actorId?: string;
-  actorRole?: string;
-  actorName?: string;
-  actorEmail?: string;
+  actorId: string;
+  actorRole: string;
+  actorName: string;
   resourceId?: string;
-  resourceType?: string;
-  sourceIp?: string;
+  resourceType: string;
+  sourceIp: string;
   description: string;
   eventType: string;
   status: 'success' | 'failure' | 'info';
-  tenantId?: string;
+  tenantId: string;
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
 }

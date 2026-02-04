@@ -4,7 +4,7 @@ export interface IOpenSearchConfig {
     username: string;
     password: string;
   };
-  ssl?: {
+  ssl: {
     rejectUnauthorized: boolean;
   };
   indexPrefix: string;

@@ -9,7 +9,7 @@ export class OpenSearchService implements IAuditService {
   private isInitialized = false;
 
   // 1. Store the service name here
-  private serviceName = 'unknown-service';
+  private serviceName!: string;
 
   private constructor() {
     const config = openSearchConfig();
@@ -20,7 +20,6 @@ export class OpenSearchService implements IAuditService {
     });
   }
 
-  // Singleton Pattern
   public static getInstance(): OpenSearchService {
     OpenSearchService.instance ||= new OpenSearchService();
     return OpenSearchService.instance;
@@ -36,19 +35,18 @@ export class OpenSearchService implements IAuditService {
           properties: {
             timestamp: { type: 'date' },
             serviceName: { type: 'keyword' },
-            actorId: { type: 'keyword' },
-            actorRole: { type: 'keyword' },
+            actorId: { type: 'text' },
+            actorRole: { type: 'text' },
             actorName: { type: 'text' },
-            actorEmail: { type: 'keyword' },
-            eventType: { type: 'keyword' },
+            eventType: { type: 'text' },
             description: { type: 'text' },
             status: { type: 'keyword' },
-            resourceId: { type: 'keyword' },
-            resourceType: { type: 'keyword' },
+            resourceId: { type: 'text' },
+            resourceType: { type: 'text' },
             sourceIp: { type: 'ip' },
             outcome: { type: 'object', enabled: true },
             actionPerformed: { type: 'object', enabled: true },
-            tenantId: { type: 'keyword' },
+            tenantId: { type: 'text' },
           },
         },
         settings: {
@@ -94,21 +92,9 @@ export class OpenSearchService implements IAuditService {
     const indexName = `${config.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
 
     const doc = {
+      ...data,
       timestamp: date.toISOString(),
       serviceName: this.serviceName,
-      actorId: data.actorId,
-      actorRole: data.actorRole,
-      actorName: data.actorName,
-      actorEmail: data.actorEmail,
-      resourceId: data.resourceId,
-      resourceType: data.resourceType,
-      sourceIp: data.sourceIp,
-      description: data.description,
-      eventType: data.eventType,
-      status: data.status,
-      actionPerformed: data.actionPerformed,
-      outcome: data.outcome,
-      tenantId: data.tenantId,
     };
 
     try {
