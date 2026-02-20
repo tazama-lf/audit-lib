@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { IAuditService, AuditLogData } from '../utils/interfaces/audit';
+import type { IAuditService, AuditLogInput } from '../utils/interfaces/audit';
 import { Client } from '@opensearch-project/opensearch';
 import { openSearchConfig } from '../config/openSearch.config';
+import { computeLogHash } from '../utils/hash-utility';
 
 export class OpenSearchService implements IAuditService {
   private readonly client: Client;
-  private static instance: OpenSearchService;
+  private static instance: OpenSearchService | undefined;
   private isInitialized = false;
 
-  // 1. Store the service name here
   private serviceName = 'unknown-service';
 
   private constructor() {
@@ -21,7 +21,7 @@ export class OpenSearchService implements IAuditService {
   }
 
   public static getInstance(): OpenSearchService {
-    OpenSearchService.instance ||= new OpenSearchService();
+    OpenSearchService.instance ??= new OpenSearchService();
     return OpenSearchService.instance;
   }
 
@@ -33,25 +33,46 @@ export class OpenSearchService implements IAuditService {
       template: {
         mappings: {
           properties: {
-            timestamp: { type: 'date' },
+            timestamp: {
+              type: 'date',
+              format: 'strict_date_optional_time||epoch_millis',
+            },
             serviceName: { type: 'keyword' },
-            actorId: { type: 'text' },
-            actorRole: { type: 'text' },
-            actorName: { type: 'text' },
-            eventType: { type: 'text' },
-            description: { type: 'text' },
-            status: { type: 'keyword' },
-            resourceId: { type: 'text' },
-            resourceType: { type: 'text' },
-            sourceIp: { type: 'ip' },
-            outcome: { type: 'object', enabled: true },
-            actionPerformed: { type: 'object', enabled: true },
-            tenantId: { type: 'text' },
+            hash: { type: 'keyword', index: true },
+            eventPhase: { type: 'keyword', index: true },
+            correlationId: { type: 'keyword', index: true },
+
+            // Nested data object with all business fields
+            data: {
+              type: 'object',
+              properties: {
+                eventType: { type: 'keyword' },
+                actorId: { type: 'keyword' },
+                actorRole: { type: 'keyword' },
+                actorName: { type: 'text' },
+                resourceType: { type: 'keyword' },
+                resourceId: { type: 'keyword' },
+                sourceIp: { type: 'ip' },
+                description: { type: 'text' },
+                tenantId: { type: 'keyword' },
+                // Fully dynamic nested objects
+                outcome: { type: 'object', enabled: true, dynamic: true },
+                actionPerformed: { type: 'object', enabled: true, dynamic: true },
+              },
+            },
           },
         },
         settings: {
-          number_of_shards: 1,
-          number_of_replicas: 0,
+          number_of_shards: 3,
+          number_of_replicas: 1,
+          refresh_interval: '5s',
+          index: {
+            codec: 'best_compression',
+            sort: {
+              field: ['timestamp', 'correlationId'],
+              order: ['desc', 'asc'],
+            },
+          },
         },
       },
     };
@@ -80,7 +101,7 @@ export class OpenSearchService implements IAuditService {
     this.isInitialized = true;
   }
 
-  public async log(data: AuditLogData): Promise<void> {
+  public async log(input: AuditLogInput): Promise<void> {
     const date = new Date();
     // Monthly Index: audit-logs-YYYY.MM
     const MONTH_OFFSET = 1;
@@ -91,16 +112,42 @@ export class OpenSearchService implements IAuditService {
     const config = openSearchConfig();
     const indexName = `${config.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
 
-    const doc = {
-      ...data,
+    const { correlationId, eventPhase, ...dataFields } = input;
+
+    const data = {
+      eventType: dataFields.eventType,
+      actorId: dataFields.actorId,
+      actorRole: dataFields.actorRole,
+      actorName: dataFields.actorName,
+      resourceType: dataFields.resourceType,
+      resourceId: dataFields.resourceId,
+      sourceIp: dataFields.sourceIp,
+      description: dataFields.description,
+      status: dataFields.status,
+      tenantId: dataFields.tenantId,
+      durationMs: dataFields.durationMs,
+      outcome: dataFields.outcome,
+      actionPerformed: dataFields.actionPerformed,
+      metadata: dataFields.metadata,
+    };
+
+    // Compute hash on data object only
+    const hash = computeLogHash(data);
+
+    // Create final document with nested structure
+    const document = {
       timestamp: date.toISOString(),
       serviceName: this.serviceName,
+      hash,
+      eventPhase,
+      correlationId,
+      data,
     };
 
     try {
       await this.client.index({
         index: indexName,
-        body: doc,
+        body: document,
         refresh: 'wait_for',
       });
     } catch (error: unknown) {
