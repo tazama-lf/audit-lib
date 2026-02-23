@@ -5,7 +5,7 @@ export interface IAuditService {
 
 export interface AuditLogInput {
   correlationId: string; // Client-generated UUID for request tracking
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED' | 'INFO';
+  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
   eventType: string;
   actorId: string;
   actorRole: string;
@@ -19,7 +19,6 @@ export interface AuditLogInput {
   durationMs?: number;
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
 }
 export interface AuditLogData {
   eventType: string;
@@ -35,7 +34,6 @@ export interface AuditLogData {
   durationMs?: number;
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
 }
 
 // Complete document structure stored in OpenSearch
@@ -43,7 +41,7 @@ export interface AuditLogDocument {
   timestamp: string; // ISO 8601 timestamp (auto-generated)
   serviceName: string; // Service identifier (set during init)
   hash: string;
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED' | 'INFO';
+  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
   correlationId: string;
   data: AuditLogData;
 }
