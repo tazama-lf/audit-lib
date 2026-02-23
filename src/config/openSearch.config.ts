@@ -29,5 +29,6 @@ export const openSearchConfig = (): IOpenSearchConfig => {
       rejectUnauthorized: Boolean(rejectUnauthorized),
     },
     indexPrefix: 'audit-logs',
+    refresh: 'wait_for',
   };
 };

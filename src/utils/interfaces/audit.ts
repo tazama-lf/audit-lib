@@ -19,9 +19,7 @@ export interface AuditLogInput {
   resourceId?: string;
   sourceIp: string;
   description: string;
-  status?: string;
   tenantId: string;
-  durationMs?: number;
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
 }
@@ -34,9 +32,7 @@ export interface AuditLogData {
   resourceId?: string;
   sourceIp: string;
   description: string;
-  status?: string;
   tenantId: string;
-  durationMs?: number;
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
 }

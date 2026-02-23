@@ -5,26 +5,52 @@ import type { AuditLogData, AuditLogDocument } from './interfaces/audit';
 const EMPTY_ARRAY_LENGTH = 0;
 
 /**
+ * Recursively converts a value to a canonical string representation.
+ * Ensures consistent ordering of object keys at all nesting levels.
+ *
+ * @param value - The value to canonicalize
+ * @returns Canonical string representation
+ */
+function canonicalize(value: unknown): string {
+  if (value === null) {
+    return 'null';
+  }
+  if (value === undefined) {
+    return 'undefined';
+  }
+  if (typeof value === 'boolean' || typeof value === 'number') {
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    // Escape special characters to prevent delimiter injection
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => canonicalize(item)).join(',')}]`;
+  }
+  if (typeof value === 'object') {
+    const sortedKeys = Object.keys(value).sort();
+    const pairs = sortedKeys.map((key) => {
+      const objValue = (value as Record<string, unknown>)[key];
+      return `${JSON.stringify(key)}:${canonicalize(objValue)}`;
+    });
+    return `{${pairs.join(',')}}`;
+  }
+  // Handle any remaining edge cases (functions, symbols, etc.) by using JSON stringify
+  return JSON.stringify(value);
+}
+
+/**
  * Computes a SHA-256 hash of the audit log data object for integrity verification.
- * The hash is computed only on the data object in canonical form.
+ * The hash is computed using a recursive canonical form that ensures consistent
+ * ordering of keys at all nesting levels and prevents delimiter injection attacks.
  *
  * @param data - The audit log data object to hash
  * @returns SHA-256 hash as a 64-character hex string
  */
 export function computeLogHash(data: AuditLogData): string {
-  // Create canonical string representation by sorting keys
-  const sortedKeys = Object.keys(data).sort();
-
-  // Build canonical string
-  const canonicalString = sortedKeys
-    .filter((key) => data[key as keyof AuditLogData] !== undefined)
-    .map((key) => {
-      const value = data[key as keyof AuditLogData];
-      // Stringify objects for consistent hashing
-      const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-      return `${key}:${stringValue}`;
-    })
-    .join('|');
+  // Convert to canonical form using recursive key sorting
+  const canonicalString = canonicalize(data);
 
   // Compute SHA-256 hash
   return crypto.createHash('sha256').update(canonicalString).digest('hex');

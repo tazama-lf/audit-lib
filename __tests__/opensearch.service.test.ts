@@ -242,6 +242,7 @@ describe('OpenSearchService', () => {
     });
 
     it('should throw error if OpenSearch fails', async () => {
+      await logger.init('TestService');
       mockIndex.mockRejectedValueOnce(new Error('Connection Refused'));
 
       await expect(

@@ -33,6 +33,7 @@ OPENSEARCH_USERNAME=your-username
 OPENSEARCH_PASSWORD=your-password
 OPENSEARCH_INDEX_PREFIX=audit-logs
 OPENSEARCH_SSL_REJECT_UNAUTHORIZED=true
+OPENSEARCH_REFRESH=false  # Options: 'false' (default), 'true', 'wait_for'
 ```
 
 ## Usage
@@ -152,12 +153,12 @@ export class UserService {
 ```typescript
 interface IAuditService {
   init: (serviceName: string) => Promise<void>;
-  log: (data: AuditLogInput) => Promise<void>;
+  log: (data: AuditLogInput) => Promise<AuditLogResult>;
 }
 
 interface AuditLogInput {
   correlationId: string;
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED' | 'INFO';
+  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
   eventType: string;
   actorId: string;
   actorRole: string;

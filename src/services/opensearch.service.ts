@@ -10,6 +10,8 @@ export class OpenSearchService implements IAuditService {
   private isInitialized = false;
 
   private serviceName = 'unknown-service';
+  private readonly indexPrefix: string;
+  private readonly refresh: 'wait_for' | 'false' | 'true';
 
   private constructor() {
     const config = openSearchConfig();
@@ -18,6 +20,8 @@ export class OpenSearchService implements IAuditService {
       auth: config.auth,
       ssl: config.ssl,
     });
+    this.indexPrefix = config.indexPrefix;
+    this.refresh = config.refresh ?? 'false';
   }
 
   public static getInstance(): OpenSearchService {
@@ -27,9 +31,8 @@ export class OpenSearchService implements IAuditService {
 
   private async ensureSchema(): Promise<void> {
     const templateName = 'audit-logs-template';
-    const config = openSearchConfig();
     const templateBody = {
-      index_patterns: [`${config.indexPrefix}-*`],
+      index_patterns: [`${this.indexPrefix}-*`],
       template: {
         mappings: {
           properties: {
@@ -109,8 +112,7 @@ export class OpenSearchService implements IAuditService {
     const PAD_CHAR = '0';
     const month = date.getUTCMonth() + MONTH_OFFSET;
     const monthStr = String(month).padStart(PAD_WIDTH, PAD_CHAR);
-    const config = openSearchConfig();
-    const indexName = `${config.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
+    const indexName = `${this.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
 
     const { correlationId, eventPhase, ...dataFields } = input;
 
@@ -123,9 +125,7 @@ export class OpenSearchService implements IAuditService {
       resourceId: dataFields.resourceId,
       sourceIp: dataFields.sourceIp,
       description: dataFields.description,
-      status: dataFields.status,
       tenantId: dataFields.tenantId,
-      durationMs: dataFields.durationMs,
       outcome: dataFields.outcome,
       actionPerformed: dataFields.actionPerformed,
     };
@@ -147,7 +147,7 @@ export class OpenSearchService implements IAuditService {
       await this.client.index({
         index: indexName,
         body: document,
-        refresh: 'wait_for',
+        refresh: this.refresh,
       });
 
       return {
