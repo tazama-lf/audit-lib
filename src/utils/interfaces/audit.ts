@@ -1,6 +1,11 @@
+export interface AuditLogResult {
+  success: boolean;
+  message: string;
+}
+
 export interface IAuditService {
   init: (serviceName: string) => Promise<void>;
-  log: (data: AuditLogInput) => Promise<void>;
+  log: (data: AuditLogInput) => Promise<AuditLogResult>;
 }
 
 export interface AuditLogInput {

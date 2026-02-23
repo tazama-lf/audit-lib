@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { IAuditService, AuditLogInput } from '../utils/interfaces/audit';
+import type { IAuditService, AuditLogInput, AuditLogResult } from '../utils/interfaces/audit';
 import { Client } from '@opensearch-project/opensearch';
 import { openSearchConfig } from '../config/openSearch.config';
 import { computeLogHash } from '../utils/hash-utility';
@@ -101,7 +101,7 @@ export class OpenSearchService implements IAuditService {
     this.isInitialized = true;
   }
 
-  public async log(input: AuditLogInput): Promise<void> {
+  public async log(input: AuditLogInput): Promise<AuditLogResult> {
     const date = new Date();
     // Monthly Index: audit-logs-YYYY.MM
     const MONTH_OFFSET = 1;
@@ -128,7 +128,6 @@ export class OpenSearchService implements IAuditService {
       durationMs: dataFields.durationMs,
       outcome: dataFields.outcome,
       actionPerformed: dataFields.actionPerformed,
-      metadata: dataFields.metadata,
     };
 
     // Compute hash on data object only
@@ -150,6 +149,11 @@ export class OpenSearchService implements IAuditService {
         body: document,
         refresh: 'wait_for',
       });
+
+      return {
+        success: true,
+        message: 'Audit log created successfully',
+      };
     } catch (error: unknown) {
       throw new Error('Audit Log Failed: Transaction Aborted.', { cause: error });
     }
