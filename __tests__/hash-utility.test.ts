@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { computeLogHash, verifyLogHash, verifyHashChain } from '../src/utils/hash-utility';
+import { computeLogHash, verifyLogHash, verifyAllHashes } from '../src/utils/hash-utility';
 import type { AuditLogData, AuditLogDocument } from '../src/utils/interfaces/audit';
 
 describe('Hash Utility', () => {
@@ -216,9 +216,9 @@ describe('Hash Utility', () => {
     });
   });
 
-  describe('verifyHashChain()', () => {
-    it('should return true for empty chain', () => {
-      const isValid = verifyHashChain([]);
+  describe('verifyAllHashes()', () => {
+    it('should return true for empty array', () => {
+      const isValid = verifyAllHashes([]);
       expect(isValid).toBe(true);
     });
 
@@ -244,7 +244,7 @@ describe('Hash Utility', () => {
         data,
       };
 
-      const isValid = verifyHashChain([logDoc]);
+      const isValid = verifyAllHashes([logDoc]);
       expect(isValid).toBe(true);
     });
 
@@ -291,11 +291,11 @@ describe('Hash Utility', () => {
         data: data2,
       };
 
-      const isValid = verifyHashChain([logDoc1, logDoc2]);
+      const isValid = verifyAllHashes([logDoc1, logDoc2]);
       expect(isValid).toBe(true);
     });
 
-    it('should return false if any log in chain is tampered', () => {
+    it('should return false if any log has invalid hash', () => {
       const data1: AuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
@@ -319,8 +319,60 @@ describe('Hash Utility', () => {
         data: tamperedData1, // Tampered data
       };
 
-      const isValid = verifyHashChain([logDoc1]);
+      const isValid = verifyAllHashes([logDoc1]);
       expect(isValid).toBe(false);
+    });
+
+    it('should NOT detect reordering (verifies independently, not as chain)', () => {
+      // This test documents the LIMITATION of verifyAllHashes
+      const data1: AuditLogData = {
+        eventType: 'LOGIN',
+        actorId: 'user-123',
+        actorRole: 'Admin',
+        actorName: 'John Doe',
+        resourceType: 'UserAccount',
+        sourceIp: '127.0.0.1',
+        description: 'Step 1',
+        tenantId: 'tenant-1',
+      };
+
+      const data2: AuditLogData = {
+        eventType: 'LOGIN',
+        actorId: 'user-123',
+        actorRole: 'Admin',
+        actorName: 'John Doe',
+        resourceType: 'UserAccount',
+        sourceIp: '127.0.0.1',
+        description: 'Step 2',
+        tenantId: 'tenant-1',
+      };
+
+      const hash1 = computeLogHash(data1);
+      const logDoc1: AuditLogDocument = {
+        timestamp: '2026-02-20T10:00:00.000Z',
+        serviceName: 'TestService',
+        hash: hash1,
+        eventPhase: 'INTENT',
+        correlationId: 'corr-123',
+        data: data1,
+      };
+
+      const hash2 = computeLogHash(data2);
+      const logDoc2: AuditLogDocument = {
+        timestamp: '2026-02-20T10:00:05.000Z',
+        serviceName: 'TestService',
+        hash: hash2,
+        eventPhase: 'SUCCESS',
+        correlationId: 'corr-123',
+        data: data2,
+      };
+
+      // Both orderings pass because there's no cryptographic linking
+      const isValidOriginal = verifyAllHashes([logDoc1, logDoc2]);
+      const isValidReversed = verifyAllHashes([logDoc2, logDoc1]);
+
+      expect(isValidOriginal).toBe(true);
+      expect(isValidReversed).toBe(true); // This documents the limitation
     });
   });
 });

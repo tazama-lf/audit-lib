@@ -68,18 +68,27 @@ export function verifyLogHash(logDocument: AuditLogDocument): boolean {
 }
 
 /**
- * Validates multiple logs by verifying each one's hash.
- * This function can be used to detect tampering across multiple logs.
+ * Validates multiple logs by verifying each one's hash independently.
+ *
+ * IMPORTANT: This function does NOT implement cryptographic chaining.
+ * It only verifies that each log's hash is valid for its data content.
+ * It CANNOT detect:
+ * - Reordering of logs
+ * - Deletion of logs
+ * - Insertion of additional logs
+ *
+ * For true tamper-evident audit trails, implement cryptographic chaining
+ * by adding a previousHash field that links each log to the previous one.
  *
  * @param logs - Array of audit log documents
- * @returns true if all logs are valid, false if any is tampered
+ * @returns true if all log hashes are valid, false if any hash is invalid
  */
-export function verifyHashChain(logs: AuditLogDocument[]): boolean {
+export function verifyAllHashes(logs: AuditLogDocument[]): boolean {
   if (logs.length === EMPTY_ARRAY_LENGTH) {
     return true;
   }
 
-  // Verify each log
+  // Verify each log's hash independently
   for (const log of logs) {
     if (!verifyLogHash(log)) {
       return false;

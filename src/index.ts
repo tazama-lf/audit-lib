@@ -2,4 +2,4 @@
 
 export { createAuditProvider } from './providers/auditLog.provider';
 export type { IAuditService, AuditLogInput, AuditLogDocument } from './utils/interfaces/audit';
-export { computeLogHash, verifyLogHash, verifyHashChain } from './utils/hash-utility';
+export { computeLogHash, verifyLogHash, verifyAllHashes } from './utils/hash-utility';
