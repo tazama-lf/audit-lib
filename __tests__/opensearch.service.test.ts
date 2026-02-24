@@ -55,6 +55,12 @@ describe('OpenSearchService', () => {
       expect(mockExistsTemplate).toHaveBeenCalled();
       expect(mockPutTemplate).not.toHaveBeenCalled();
     });
+
+    it('should throw error if initialized with different service name', async () => {
+      await logger.init('FirstService');
+
+      await expect(logger.init('DifferentService')).rejects.toThrow('OpenSearchService already initialized with "FirstService".');
+    });
   });
 
   describe('log()', () => {

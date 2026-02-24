@@ -94,7 +94,6 @@ export class UserService {
         sourceIp: '192.168.1.100',
         description: 'User created successfully',
         tenantId: 'tenant-1',
-        durationMs: 120,
         outcome: { userId: result.userId },
       });
     } catch (error) {
@@ -110,7 +109,6 @@ export class UserService {
         sourceIp: '192.168.1.100',
         description: 'User creation failed',
         tenantId: 'tenant-1',
-        durationMs: 50,
         outcome: { errorCode: 'DB_001', errorMessage: error.message },
       });
     }

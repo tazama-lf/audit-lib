@@ -99,6 +99,36 @@ describe('Hash Utility', () => {
 
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
     });
+
+    it('should handle edge cases (null, undefined, boolean, number, array)', () => {
+      const data: AuditLogData = {
+        eventType: 'TEST_EVENT',
+        actorId: 'user-123',
+        actorRole: 'Admin',
+        actorName: 'Test User',
+        resourceType: 'TestResource',
+        sourceIp: '127.0.0.1',
+        description: 'Testing edge cases',
+        tenantId: 'tenant-1',
+        outcome: {
+          nullValue: null,
+          undefinedValue: undefined,
+          booleanValue: true,
+          numberValue: 42,
+          arrayValue: [1, 2, 'test', null, { nested: true }],
+          mixedObject: {
+            flag: false,
+            count: 0,
+            items: ['a', 'b'],
+          },
+        },
+      };
+
+      const hash = computeLogHash(data);
+
+      expect(hash).toMatch(/^[a-f0-9]{64}$/);
+      expect(hash.length).toBe(64);
+    });
   });
 
   describe('verifyLogHash()', () => {
