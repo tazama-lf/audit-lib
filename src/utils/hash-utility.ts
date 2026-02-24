@@ -16,7 +16,8 @@ function canonicalize(value: unknown): string {
     return 'null';
   }
   if (value === undefined) {
-    return 'undefined';
+    // Match JSON.stringify array behavior
+    return 'null';
   }
   if (typeof value === 'boolean' || typeof value === 'number') {
     return String(value);
@@ -26,14 +27,16 @@ function canonicalize(value: unknown): string {
     return JSON.stringify(value);
   }
   if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalize(item)).join(',')}]`;
+    return `[${value.map((item) => (item === undefined ? 'null' : canonicalize(item))).join(',')}]`;
   }
   if (typeof value === 'object') {
     const sortedKeys = Object.keys(value).sort();
-    const pairs = sortedKeys.map((key) => {
-      const objValue = (value as Record<string, unknown>)[key];
-      return `${JSON.stringify(key)}:${canonicalize(objValue)}`;
-    });
+    const pairs = sortedKeys
+      .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
+      .map((key) => {
+        const objValue = (value as Record<string, unknown>)[key];
+        return `${JSON.stringify(key)}:${canonicalize(objValue)}`;
+      });
     return `{${pairs.join(',')}}`;
   }
   // Handle any remaining edge cases (functions, symbols, etc.) by using JSON stringify
