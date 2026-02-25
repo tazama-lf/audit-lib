@@ -54,7 +54,7 @@ export class AppModule {}
 
 ```typescript
 import { Inject, Injectable } from '@nestjs/common';
-import { IAuditService, AuditLogInput } from '@tazama-lf/audit-lib';
+import { IAuditService, IAuditLogInput, EventPhase } from '@tazama-lf/audit-lib';
 import { randomUUID } from 'node:crypto';
 
 @Injectable()
@@ -67,7 +67,7 @@ export class UserService {
     // Log INTENT
     await this.auditLogger.log({
       correlationId,
-      eventPhase: 'INTENT',
+      eventPhase: EventPhase.INTENT,
       eventType: 'CREATE_USER',
       actorId: 'admin-123',
       actorRole: 'Admin',
@@ -84,7 +84,7 @@ export class UserService {
       // Log SUCCESS
       await this.auditLogger.log({
         correlationId,
-        eventPhase: 'SUCCESS',
+        eventPhase: EventPhase.SUCCESS,
         eventType: 'CREATE_USER',
         actorId: 'admin-123',
         actorRole: 'Admin',
@@ -100,7 +100,7 @@ export class UserService {
       // Log FAILED
       await this.auditLogger.log({
         correlationId,
-        eventPhase: 'FAILED',
+        eventPhase: EventPhase.FAILED,
         eventType: 'CREATE_USER',
         actorId: 'admin-123',
         actorRole: 'Admin',
@@ -146,6 +146,16 @@ export class UserService {
 
 ## API Reference
 
+### Event Phase Enum
+
+```typescript
+enum EventPhase {
+  INTENT = 'INTENT',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+}
+```
+
 ### Interfaces
 
 ```typescript
@@ -156,7 +166,7 @@ interface IAuditService {
 
 interface AuditLogInput {
   correlationId: string;
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
+  eventPhase: EventPhase;
   eventType: string;
   actorId: string;
   actorRole: string;

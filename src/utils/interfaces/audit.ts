@@ -1,16 +1,22 @@
-export interface AuditLogResult {
+export enum EventPhase {
+  INTENT = 'INTENT',
+  SUCCESS = 'SUCCESS',
+  FAILED = 'FAILED',
+}
+
+export interface IAuditLogResult {
   success: boolean;
   message: string;
 }
 
 export interface IAuditService {
   init: (serviceName: string) => Promise<void>;
-  log: (data: AuditLogInput) => Promise<AuditLogResult>;
+  log: (data: IAuditLogInput) => Promise<IAuditLogResult>;
 }
 
-export interface AuditLogInput {
+export interface IAuditLogInput {
   correlationId: string; // Client-generated UUID for request tracking
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
+  eventPhase: EventPhase;
   eventType: string;
   actorId: string;
   actorRole: string;
@@ -23,7 +29,7 @@ export interface AuditLogInput {
   outcome?: Record<string, unknown>;
   actionPerformed?: Record<string, unknown>;
 }
-export interface AuditLogData {
+export interface IAuditLogData {
   eventType: string;
   actorId: string;
   actorRole: string;
@@ -38,11 +44,11 @@ export interface AuditLogData {
 }
 
 // Complete document structure stored in OpenSearch
-export interface AuditLogDocument {
+export interface IAuditLogDocument {
   timestamp: string; // ISO 8601 timestamp (auto-generated)
   serviceName: string; // Service identifier (set during init)
   hash: string;
-  eventPhase: 'INTENT' | 'SUCCESS' | 'FAILED';
+  eventPhase: EventPhase;
   correlationId: string;
-  data: AuditLogData;
+  data: IAuditLogData;
 }

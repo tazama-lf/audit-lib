@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import { computeLogHash, verifyLogHash, verifyAllHashes } from '../src/utils/hash-utility';
-import type { AuditLogData, AuditLogDocument } from '../src/utils/interfaces/audit';
+import type { IAuditLogData, IAuditLogDocument } from '../src/utils/interfaces/audit';
+import { EventPhase } from '../src/utils/interfaces/audit';
 
 describe('Hash Utility', () => {
   describe('computeLogHash()', () => {
     it('should compute a valid SHA-256 hash (64 hex characters)', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -23,7 +24,7 @@ describe('Hash Utility', () => {
     });
 
     it('should compute deterministic hashes (same input = same hash)', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'CREATE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -41,7 +42,7 @@ describe('Hash Utility', () => {
     });
 
     it('should compute different hashes for different data', () => {
-      const data1: AuditLogData = {
+      const data1: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -52,7 +53,7 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const data2: AuditLogData = {
+      const data2: IAuditLogData = {
         ...data1,
         actorId: 'user-456', // Different actor
       };
@@ -64,7 +65,7 @@ describe('Hash Utility', () => {
     });
 
     it('should handle optional fields (outcome, actionPerformed)', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'CREATE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -83,7 +84,7 @@ describe('Hash Utility', () => {
     });
 
     it('should handle resourceId field', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'DELETE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -101,7 +102,7 @@ describe('Hash Utility', () => {
     });
 
     it('should handle edge cases (null, undefined, boolean, number, array)', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'TEST_EVENT',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -133,7 +134,7 @@ describe('Hash Utility', () => {
 
   describe('verifyLogHash()', () => {
     it('should return true for valid hash', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -145,11 +146,11 @@ describe('Hash Utility', () => {
       };
 
       const hash = computeLogHash(data);
-      const logDocument: AuditLogDocument = {
+      const logDocument: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data,
       };
@@ -160,7 +161,7 @@ describe('Hash Utility', () => {
     });
 
     it('should return false for tampered data', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -175,11 +176,11 @@ describe('Hash Utility', () => {
 
       // Create document with tampered data
       const tamperedData = { ...data, actorId: 'user-456' };
-      const logDocument: AuditLogDocument = {
+      const logDocument: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash, // Original hash
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data: tamperedData, // Tampered data
       };
@@ -190,7 +191,7 @@ describe('Hash Utility', () => {
     });
 
     it('should return false for tampered hash', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -201,11 +202,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const logDocument: AuditLogDocument = {
+      const logDocument: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash: 'fakehash123', // Wrong hash
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data,
       };
@@ -223,7 +224,7 @@ describe('Hash Utility', () => {
     });
 
     it('should return true for single valid log', () => {
-      const data: AuditLogData = {
+      const data: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -235,11 +236,11 @@ describe('Hash Utility', () => {
       };
 
       const hash = computeLogHash(data);
-      const logDoc: AuditLogDocument = {
+      const logDoc: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data,
       };
@@ -249,7 +250,7 @@ describe('Hash Utility', () => {
     });
 
     it('should return true for multiple valid logs', () => {
-      const data1: AuditLogData = {
+      const data1: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -261,16 +262,16 @@ describe('Hash Utility', () => {
       };
 
       const hash1 = computeLogHash(data1);
-      const logDoc1: AuditLogDocument = {
+      const logDoc1: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash: hash1,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data: data1,
       };
 
-      const data2: AuditLogData = {
+      const data2: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -282,11 +283,11 @@ describe('Hash Utility', () => {
       };
 
       const hash2 = computeLogHash(data2);
-      const logDoc2: AuditLogDocument = {
+      const logDoc2: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:05.000Z',
         serviceName: 'TestService',
         hash: hash2,
-        eventPhase: 'SUCCESS',
+        eventPhase: EventPhase.SUCCESS,
         correlationId: 'corr-123',
         data: data2,
       };
@@ -296,7 +297,7 @@ describe('Hash Utility', () => {
     });
 
     it('should return false if any log has invalid hash', () => {
-      const data1: AuditLogData = {
+      const data1: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -310,11 +311,11 @@ describe('Hash Utility', () => {
       const hash1 = computeLogHash(data1);
       const tamperedData1 = { ...data1, actorId: 'user-456' };
 
-      const logDoc1: AuditLogDocument = {
+      const logDoc1: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash: hash1, // Original hash
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data: tamperedData1, // Tampered data
       };
@@ -325,7 +326,7 @@ describe('Hash Utility', () => {
 
     it('should NOT detect reordering (verifies independently, not as chain)', () => {
       // This test documents the LIMITATION of verifyAllHashes
-      const data1: AuditLogData = {
+      const data1: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -336,7 +337,7 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const data2: AuditLogData = {
+      const data2: IAuditLogData = {
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -348,21 +349,21 @@ describe('Hash Utility', () => {
       };
 
       const hash1 = computeLogHash(data1);
-      const logDoc1: AuditLogDocument = {
+      const logDoc1: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
         hash: hash1,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         correlationId: 'corr-123',
         data: data1,
       };
 
       const hash2 = computeLogHash(data2);
-      const logDoc2: AuditLogDocument = {
+      const logDoc2: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:05.000Z',
         serviceName: 'TestService',
         hash: hash2,
-        eventPhase: 'SUCCESS',
+        eventPhase: EventPhase.SUCCESS,
         correlationId: 'corr-123',
         data: data2,
       };

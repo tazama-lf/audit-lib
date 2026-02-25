@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { OpenSearchService } from '../src/services/opensearch.service';
+import { EventPhase } from '../src/utils/interfaces/audit';
 // Mock OpenSearch config to avoid env validation during service construction
 jest.mock('../src/config/openSearch.config', () => ({
   openSearchConfig: () => ({
@@ -69,7 +70,7 @@ describe('OpenSearchService', () => {
 
       await logger.log({
         correlationId: 'corr-abc-123',
-        eventPhase: 'SUCCESS',
+        eventPhase: EventPhase.SUCCESS,
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -118,7 +119,7 @@ describe('OpenSearchService', () => {
 
       const testInput = {
         correlationId: 'corr-abc-123',
-        eventPhase: 'INTENT' as const,
+        eventPhase: EventPhase.INTENT,
         eventType: 'LOGIN',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -150,7 +151,7 @@ describe('OpenSearchService', () => {
       // Log INTENT
       await logger.log({
         correlationId,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         eventType: 'CREATE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -164,7 +165,7 @@ describe('OpenSearchService', () => {
       // Log SUCCESS
       await logger.log({
         correlationId,
-        eventPhase: 'SUCCESS',
+        eventPhase: EventPhase.SUCCESS,
         eventType: 'CREATE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -198,7 +199,7 @@ describe('OpenSearchService', () => {
       // Log INTENT
       await logger.log({
         correlationId,
-        eventPhase: 'INTENT',
+        eventPhase: EventPhase.INTENT,
         eventType: 'DELETE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -213,7 +214,7 @@ describe('OpenSearchService', () => {
       // Log FAILED (errors go in outcome)
       await logger.log({
         correlationId,
-        eventPhase: 'FAILED',
+        eventPhase: EventPhase.FAILED,
         eventType: 'DELETE_USER',
         actorId: 'user-123',
         actorRole: 'Admin',
@@ -254,7 +255,7 @@ describe('OpenSearchService', () => {
       await expect(
         logger.log({
           correlationId: 'corr-error-123',
-          eventPhase: 'INTENT',
+          eventPhase: EventPhase.INTENT,
           eventType: 'LOGIN',
           actorId: '1',
           actorRole: 'Admin',

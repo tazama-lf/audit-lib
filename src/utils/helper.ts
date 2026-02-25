@@ -46,3 +46,15 @@ export function validateEnvVar(name: string, type: 'string' | 'number' | 'boolea
       throw new Error(`Environment variable ${name} is not a valid boolean.`);
   }
 }
+
+export function generateIndexName(prefix: string): string {
+  const date = new Date();
+  // Monthly Index: audit-logs-YYYY.MM
+  const MONTH_OFFSET = 1;
+  const PAD_WIDTH = 2;
+  const PAD_CHAR = '0';
+  const month = date.getUTCMonth() + MONTH_OFFSET;
+  const monthStr = String(month).padStart(PAD_WIDTH, PAD_CHAR);
+  const indexName = `${prefix}-${date.getUTCFullYear()}.${monthStr}`;
+  return indexName;
+}

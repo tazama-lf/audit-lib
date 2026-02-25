@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { IAuditService, AuditLogInput, AuditLogResult } from '../utils/interfaces/audit';
+import type { IAuditService, IAuditLogInput, IAuditLogResult } from '../utils/interfaces/audit';
 import { Client } from '@opensearch-project/opensearch';
 import { openSearchConfig } from '../config/openSearch.config';
 import { computeLogHash } from '../utils/hash-utility';
+import { generateIndexName } from '../utils/helper';
+import { createAuditLogTemplate } from '../config/opensearch.template';
 
 export class OpenSearchService implements IAuditService {
   private readonly client: Client;
@@ -31,54 +33,7 @@ export class OpenSearchService implements IAuditService {
 
   private async ensureSchema(): Promise<void> {
     const templateName = 'audit-logs-template';
-    const templateBody = {
-      index_patterns: [`${this.indexPrefix}-*`],
-      template: {
-        mappings: {
-          properties: {
-            timestamp: {
-              type: 'date',
-              format: 'strict_date_optional_time||epoch_millis',
-            },
-            serviceName: { type: 'keyword' },
-            hash: { type: 'keyword', index: true },
-            eventPhase: { type: 'keyword', index: true },
-            correlationId: { type: 'keyword', index: true },
-
-            // Nested data object with all business fields
-            data: {
-              type: 'object',
-              properties: {
-                eventType: { type: 'keyword' },
-                actorId: { type: 'keyword' },
-                actorRole: { type: 'keyword' },
-                actorName: { type: 'text' },
-                resourceType: { type: 'keyword' },
-                resourceId: { type: 'keyword' },
-                sourceIp: { type: 'ip' },
-                description: { type: 'text' },
-                tenantId: { type: 'keyword' },
-                // Fully dynamic nested objects
-                outcome: { type: 'object', enabled: true, dynamic: true },
-                actionPerformed: { type: 'object', enabled: true, dynamic: true },
-              },
-            },
-          },
-        },
-        settings: {
-          number_of_shards: 3,
-          number_of_replicas: 1,
-          refresh_interval: '5s',
-          index: {
-            codec: 'best_compression',
-            sort: {
-              field: ['timestamp', 'correlationId'],
-              order: ['desc', 'asc'],
-            },
-          },
-        },
-      },
-    };
+    const templateBody = createAuditLogTemplate(this.indexPrefix);
 
     const HTTP_NOT_FOUND = 404;
     const exists = await this.client.indices.existsTemplate({ name: templateName });
@@ -104,16 +59,9 @@ export class OpenSearchService implements IAuditService {
     this.isInitialized = true;
   }
 
-  public async log(input: AuditLogInput): Promise<AuditLogResult> {
+  public async log(input: IAuditLogInput): Promise<IAuditLogResult> {
     const date = new Date();
-    // Monthly Index: audit-logs-YYYY.MM
-    const MONTH_OFFSET = 1;
-    const PAD_WIDTH = 2;
-    const PAD_CHAR = '0';
-    const month = date.getUTCMonth() + MONTH_OFFSET;
-    const monthStr = String(month).padStart(PAD_WIDTH, PAD_CHAR);
-    const indexName = `${this.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
-
+    const indexName = generateIndexName(this.indexPrefix);
     const { correlationId, eventPhase, ...dataFields } = input;
 
     const data = {
