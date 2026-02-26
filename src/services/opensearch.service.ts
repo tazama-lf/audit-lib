@@ -60,6 +60,9 @@ export class OpenSearchService implements IAuditService {
   }
 
   public async log(input: IAuditLogInput): Promise<IAuditLogResult> {
+    if (!this.isInitialized) {
+      throw new Error('OpenSearchService must be initialized before log(). Call init(serviceName) first.');
+    }
     const date = new Date();
     const indexName = generateIndexName(this.indexPrefix);
     const { correlationId, eventPhase, ...dataFields } = input;
@@ -79,7 +82,11 @@ export class OpenSearchService implements IAuditService {
     };
 
     // Compute hash on data object only
-    const hash = computeLogHash(data);
+    const hash = computeLogHash({
+      correlationId,
+      eventPhase,
+      data,
+    });
 
     // Create final document with nested structure
     const document = {

@@ -52,3 +52,9 @@ export interface IAuditLogDocument {
   correlationId: string;
   data: IAuditLogData;
 }
+
+export interface IHashAuditData {
+  correlationId: string;
+  eventPhase: EventPhase;
+  data: IAuditLogData;
+}

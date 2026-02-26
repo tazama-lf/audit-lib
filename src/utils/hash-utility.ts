@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import crypto from 'node:crypto';
-import type { IAuditLogData, IAuditLogDocument } from './interfaces/audit';
+import type { IAuditLogDocument, IHashAuditData } from './interfaces/audit';
 
 const EMPTY_ARRAY_LENGTH = 0;
 
@@ -51,7 +51,7 @@ function canonicalize(value: unknown): string {
  * @param data - The audit log data object to hash
  * @returns SHA-256 hash as a 64-character hex string
  */
-export function computeLogHash(data: IAuditLogData): string {
+export function computeLogHash(data: IHashAuditData): string {
   // Convert to canonical form using recursive key sorting
   const canonicalString = canonicalize(data);
 
@@ -66,7 +66,11 @@ export function computeLogHash(data: IAuditLogData): string {
  * @returns true if the hash matches, false if tampered
  */
 export function verifyLogHash(logDocument: IAuditLogDocument): boolean {
-  const recomputedHash = computeLogHash(logDocument.data);
+  const recomputedHash = computeLogHash({
+    correlationId: logDocument.correlationId,
+    eventPhase: logDocument.eventPhase,
+    data: logDocument.data,
+  });
   return recomputedHash === logDocument.hash;
 }
 

@@ -195,7 +195,7 @@ interface AuditLogInput {
 
 - **Pattern**: `{indexPrefix}-YYYY.MM` (monthly rotation)
 - **Example**: `audit-logs-2026.02`
-- **Mappings**: Root fields (timestamp, serviceName, hash, eventPhase, correlationId) as keywords; nested data object with specific types
+- **Mappings**: Root fields include `timestamp` (date) and other metadata fields (`serviceName`, `hash`, `eventPhase`, `correlationId`) as keywords; nested `data` object with specific types
 - **Settings**: 3 shards, 1 replica, 5s refresh interval, best compression
 
 ## Development

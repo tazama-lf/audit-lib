@@ -33,8 +33,8 @@ export function createAuditLogTemplate(indexPrefix: string): Record<string, unkn
               description: { type: 'text' },
               tenantId: { type: 'keyword' },
               // Fully dynamic nested objects
-              outcome: { type: 'object', enabled: true, dynamic: true },
-              actionPerformed: { type: 'object', enabled: true, dynamic: true },
+              outcome: { type: 'flattened' },
+              actionPerformed: { type: 'flattened' },
             },
           },
         },
