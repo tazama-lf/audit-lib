@@ -65,13 +65,13 @@ export function computeLogHash(data: IHashAuditData): string {
  * @param logDocument - The complete audit log document to verify
  * @returns true if the hash matches, false if tampered
  */
-export function verifyLogHash(logDocument: IAuditLogDocument): boolean {
-  const recomputedHash = computeLogHash({
-    correlationId: logDocument.correlationId,
-    eventPhase: logDocument.eventPhase,
-    data: logDocument.data,
+export function verifyLogHash(log: IAuditLogDocument): boolean {
+  const computedHash = computeLogHash({
+    correlationId: log.correlationId,
+    eventPhase: log.eventPhase,
+    data: log.data,
   });
-  return recomputedHash === logDocument.hash;
+  return log.hash === computedHash;
 }
 
 /**

@@ -17,7 +17,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
 
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
       expect(hash.length).toBe(64);
@@ -35,8 +39,16 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash1 = computeLogHash(data);
-      const hash2 = computeLogHash(data);
+      const hash1 = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
+      const hash2 = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
 
       expect(hash1).toBe(hash2);
     });
@@ -58,8 +70,16 @@ describe('Hash Utility', () => {
         actorId: 'user-456', // Different actor
       };
 
-      const hash1 = computeLogHash(data1);
-      const hash2 = computeLogHash(data2);
+      const hash1 = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data: data1,
+      });
+      const hash2 = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data: data2,
+      });
 
       expect(hash1).not.toBe(hash2);
     });
@@ -78,7 +98,11 @@ describe('Hash Utility', () => {
         actionPerformed: { action: 'create', target: 'user' },
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.SUCCESS,
+        data,
+      });
 
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
     });
@@ -96,7 +120,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.SUCCESS,
+        data,
+      });
 
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
     });
@@ -125,7 +153,11 @@ describe('Hash Utility', () => {
         },
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'test-corr-id',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
 
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
       expect(hash.length).toBe(64);
@@ -145,7 +177,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
       const logDocument: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
@@ -172,7 +208,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
 
       // Create document with tampered data
       const tamperedData = { ...data, actorId: 'user-456' };
@@ -235,7 +275,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash = computeLogHash(data);
+      const hash = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data,
+      });
       const logDoc: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
@@ -261,7 +305,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash1 = computeLogHash(data1);
+      const hash1 = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data: data1,
+      });
       const logDoc1: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
@@ -282,7 +330,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash2 = computeLogHash(data2);
+      const hash2 = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.SUCCESS,
+        data: data2,
+      });
       const logDoc2: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:05.000Z',
         serviceName: 'TestService',
@@ -308,7 +360,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash1 = computeLogHash(data1);
+      const hash1 = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data: data1,
+      });
       const tamperedData1 = { ...data1, actorId: 'user-456' };
 
       const logDoc1: IAuditLogDocument = {
@@ -348,7 +404,11 @@ describe('Hash Utility', () => {
         tenantId: 'tenant-1',
       };
 
-      const hash1 = computeLogHash(data1);
+      const hash1 = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.INTENT,
+        data: data1,
+      });
       const logDoc1: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:00.000Z',
         serviceName: 'TestService',
@@ -358,7 +418,11 @@ describe('Hash Utility', () => {
         data: data1,
       };
 
-      const hash2 = computeLogHash(data2);
+      const hash2 = computeLogHash({
+        correlationId: 'corr-123',
+        eventPhase: EventPhase.SUCCESS,
+        data: data2,
+      });
       const logDoc2: IAuditLogDocument = {
         timestamp: '2026-02-20T10:00:05.000Z',
         serviceName: 'TestService',
