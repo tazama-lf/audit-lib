@@ -1,6 +1,6 @@
 {
   "name": "@tazama-lf/audit-lib",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Tazama audit log library",
   "main": "lib/index.js",
   "keywords": [],
