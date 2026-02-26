@@ -15,7 +15,10 @@ export const openSearchConfig = (): IOpenSearchConfig => {
   const username = validateEnvVar('OPENSEARCH_USERNAME', 'string', true).toString();
   const password = validateEnvVar('OPENSEARCH_PASSWORD', 'string', true).toString();
   const rejectUnauthorized = validateEnvVar('OPENSEARCH_SSL_REJECT_UNAUTHORIZED', 'boolean', true);
-
+  const rawRefresh = validateEnvVar('OPENSEARCH_REFRESH', 'string', true)?.toString() ?? 'false';
+  const refresh = (['wait_for', 'true', 'false'] as const).includes(rawRefresh as 'wait_for' | 'true' | 'false')
+    ? (rawRefresh as 'wait_for' | 'true' | 'false')
+    : 'false';
   return {
     node,
     auth:
@@ -29,5 +32,6 @@ export const openSearchConfig = (): IOpenSearchConfig => {
       rejectUnauthorized: Boolean(rejectUnauthorized),
     },
     indexPrefix: 'audit-logs',
+    refresh,
   };
 };

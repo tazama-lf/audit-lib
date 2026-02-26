@@ -8,4 +8,5 @@ export interface IOpenSearchConfig {
     rejectUnauthorized: boolean;
   };
   indexPrefix: string;
+  refresh?: 'wait_for' | 'false' | 'true';
 }

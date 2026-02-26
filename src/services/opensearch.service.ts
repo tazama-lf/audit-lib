@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { IAuditService, AuditLogData } from '../utils/interfaces/audit';
+import type { IAuditService, IAuditLogInput, IAuditLogResult } from '../utils/interfaces/audit';
 import { Client } from '@opensearch-project/opensearch';
 import { openSearchConfig } from '../config/openSearch.config';
+import { computeLogHash } from '../utils/hash-utility';
+import { generateIndexName } from '../utils/helper';
+import { createAuditLogTemplate } from '../config/opensearch.template';
 
 export class OpenSearchService implements IAuditService {
   private readonly client: Client;
-  private static instance: OpenSearchService;
+  private static instance: OpenSearchService | undefined;
   private isInitialized = false;
 
-  // 1. Store the service name here
   private serviceName = 'unknown-service';
+  private readonly indexPrefix: string;
+  private readonly refresh: 'wait_for' | 'false' | 'true';
 
   private constructor() {
     const config = openSearchConfig();
@@ -18,43 +22,18 @@ export class OpenSearchService implements IAuditService {
       auth: config.auth,
       ssl: config.ssl,
     });
+    this.indexPrefix = config.indexPrefix;
+    this.refresh = config.refresh ?? 'false';
   }
 
   public static getInstance(): OpenSearchService {
-    OpenSearchService.instance ||= new OpenSearchService();
+    OpenSearchService.instance ??= new OpenSearchService();
     return OpenSearchService.instance;
   }
 
   private async ensureSchema(): Promise<void> {
     const templateName = 'audit-logs-template';
-    const config = openSearchConfig();
-    const templateBody = {
-      index_patterns: [`${config.indexPrefix}-*`],
-      template: {
-        mappings: {
-          properties: {
-            timestamp: { type: 'date' },
-            serviceName: { type: 'keyword' },
-            actorId: { type: 'text' },
-            actorRole: { type: 'text' },
-            actorName: { type: 'text' },
-            eventType: { type: 'text' },
-            description: { type: 'text' },
-            status: { type: 'keyword' },
-            resourceId: { type: 'text' },
-            resourceType: { type: 'text' },
-            sourceIp: { type: 'ip' },
-            outcome: { type: 'object', enabled: true },
-            actionPerformed: { type: 'object', enabled: true },
-            tenantId: { type: 'text' },
-          },
-        },
-        settings: {
-          number_of_shards: 1,
-          number_of_replicas: 0,
-        },
-      },
-    };
+    const templateBody = createAuditLogTemplate(this.indexPrefix);
 
     const HTTP_NOT_FOUND = 404;
     const exists = await this.client.indices.existsTemplate({ name: templateName });
@@ -80,29 +59,56 @@ export class OpenSearchService implements IAuditService {
     this.isInitialized = true;
   }
 
-  public async log(data: AuditLogData): Promise<void> {
+  public async log(input: IAuditLogInput): Promise<IAuditLogResult> {
+    if (!this.isInitialized) {
+      throw new Error('OpenSearchService must be initialized before log(). Call init(serviceName) first.');
+    }
     const date = new Date();
-    // Monthly Index: audit-logs-YYYY.MM
-    const MONTH_OFFSET = 1;
-    const PAD_WIDTH = 2;
-    const PAD_CHAR = '0';
-    const month = date.getUTCMonth() + MONTH_OFFSET;
-    const monthStr = String(month).padStart(PAD_WIDTH, PAD_CHAR);
-    const config = openSearchConfig();
-    const indexName = `${config.indexPrefix}-${date.getUTCFullYear()}.${monthStr}`;
+    const indexName = generateIndexName(this.indexPrefix);
+    const { correlationId, eventPhase, ...dataFields } = input;
 
-    const doc = {
-      ...data,
+    const data = {
+      eventType: dataFields.eventType,
+      actorId: dataFields.actorId,
+      actorRole: dataFields.actorRole,
+      actorName: dataFields.actorName,
+      resourceType: dataFields.resourceType,
+      resourceId: dataFields.resourceId,
+      sourceIp: dataFields.sourceIp,
+      description: dataFields.description,
+      tenantId: dataFields.tenantId,
+      outcome: dataFields.outcome,
+      actionPerformed: dataFields.actionPerformed,
+    };
+
+    // Compute hash on data object only
+    const hash = computeLogHash({
+      correlationId,
+      eventPhase,
+      data,
+    });
+
+    // Create final document with nested structure
+    const document = {
       timestamp: date.toISOString(),
       serviceName: this.serviceName,
+      hash,
+      eventPhase,
+      correlationId,
+      data,
     };
 
     try {
       await this.client.index({
         index: indexName,
-        body: doc,
-        refresh: 'wait_for',
+        body: document,
+        refresh: this.refresh,
       });
+
+      return {
+        success: true,
+        message: 'Audit log created successfully',
+      };
     } catch (error: unknown) {
       throw new Error('Audit Log Failed: Transaction Aborted.', { cause: error });
     }
