@@ -1,6 +1,6 @@
 {
   "name": "@tazama-lf/audit-lib",
-  "version": "1.0.8",
+  "version": "1.0.9-rc.0",
   "description": "Tazama audit log library",
   "main": "lib/index.js",
   "keywords": [],
@@ -30,6 +30,7 @@
     "lint:eslint-no-inline": "eslint --no-inline-config",
     "lint:prettier": "prettier --check \"**/*.ts\"",
     "dry": "npm publish --dry-run",
+    "publish:dev": "npm publish --tag rc",
     "prepare": "husky"
   },
   "dependencies": {
